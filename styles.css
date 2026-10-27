@@ -25,7 +25,7 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  scroll-padding-bottom: 120px;
 }
 
 body {
@@ -36,12 +36,6 @@ body {
   font-size: 16px;
   line-height: 1.6;
   padding-bottom: calc(104px + env(safe-area-inset-bottom));
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
 }
 
 button,
@@ -655,6 +649,10 @@ details {
 }
 
 @media (min-width: 980px) {
+  html {
+    scroll-padding-bottom: 0;
+  }
+
   body {
     padding-bottom: 32px;
   }
