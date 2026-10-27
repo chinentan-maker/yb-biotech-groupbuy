@@ -206,6 +206,110 @@ h3 {
   box-shadow: var(--shadow);
 }
 
+.photo-frame {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.photo-frame img {
+  display: block;
+  width: 100%;
+  height: 190px;
+  object-fit: contain;
+  background: #fff;
+}
+
+.photo-frame.duo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.photo-frame.duo img {
+  height: 140px;
+}
+
+.photo-note {
+  display: none;
+  margin: 0;
+  padding: 8px 10px 10px;
+  color: var(--faint);
+  font-size: 0.88rem;
+}
+
+.photo-frame.is-fallback .photo-note {
+  display: block;
+}
+
+.intro {
+  margin-top: 8px;
+}
+
+.points,
+.who {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.legal {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.picker {
+  margin-top: 18px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  border: 1px solid #ddd4c8;
+  background: white;
+  border-radius: 999px;
+  min-height: 44px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.chip[aria-pressed="true"] {
+  background: var(--green-soft);
+  border-color: var(--green);
+  color: var(--green-deep);
+}
+
+.chip-pair {
+  background: #f7f4ef;
+}
+
+.rec {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.rec h3 {
+  font-size: 1.05rem;
+}
+
+.rec .button-primary {
+  width: 100%;
+}
+
 .card[data-on="true"] {
   border-color: #b7d7c6;
   background: #fbfffc;
@@ -651,6 +755,25 @@ details {
 @media (min-width: 980px) {
   html {
     scroll-padding-bottom: 0;
+  }
+
+  .card {
+    grid-template-columns: 168px minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .photo-frame {
+    grid-row: span 2;
+  }
+
+  .photo-frame img,
+  .photo-frame.duo img {
+    height: 148px;
+  }
+
+  .rec .button-primary {
+    width: auto;
+    justify-self: start;
   }
 
   body {

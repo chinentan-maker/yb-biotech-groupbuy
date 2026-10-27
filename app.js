@@ -97,6 +97,22 @@
       ? '<span class="badge">' + escapeHtml(item.badge) + "</span>"
       : "";
     var label = item.name + "，" + item.spec;
+    var sources = item.images || (item.image ? [item.image] : ["images/placeholder.svg"]);
+    var photos = sources
+      .map(function (src) {
+        return (
+          '<img src="' +
+          escapeHtml(src) +
+          '" alt="' +
+          escapeHtml(label) +
+          '" onerror="this.onerror=null;this.src=\'images/placeholder.svg\';this.parentElement.classList.add(\'is-fallback\');" />'
+        );
+      })
+      .join("");
+    var copy = "";
+    if (item.intro) copy += '<p class="intro">' + escapeHtml(item.intro) + "</p>";
+    if (item.points) copy += '<p class="points">' + escapeHtml(item.points) + "</p>";
+    if (item.audience) copy += '<p class="who">適合：' + escapeHtml(item.audience) + "</p>";
 
     return (
       '<article class="card" data-id="' +
@@ -106,13 +122,20 @@
       '"' +
       (item.listPrice ? ' data-list-price="' + item.listPrice + '"' : "") +
       ">" +
-      '<div><div class="title-row"><h3>' +
+      '<div class="photo-frame' +
+      (sources.length > 1 ? " duo" : "") +
+      '">' +
+      photos +
+      '<p class="photo-note">官方商品圖沒載入，先顯示占位。</p></div>' +
+      '<div class="card-copy"><div class="title-row"><h3>' +
       escapeHtml(item.name) +
       "</h3>" +
       badge +
       '</div><p class="spec">' +
       escapeHtml(item.spec) +
-      "</p></div>" +
+      "</p>" +
+      copy +
+      "</div>" +
       '<div class="buy"><div class="prices">' +
       compare +
       '<p class="sale"><span class="sale-label">團購價</span> <strong>' +
@@ -683,6 +706,216 @@
     latestOrder = null;
   }
 
+  var needState = {};
+  var NEED_CHIPS = [
+    { id: "guard", label: "容易累、想顧防護力" },
+    { id: "gut", label: "腸胃敏感" },
+    { id: "allergy", label: "季節或環境敏感" },
+    { id: "eyes", label: "用眼過度" },
+    { id: "focus", label: "想更專注清楚" },
+  ];
+  var NEED_SHORTCUTS = [
+    { id: "eyes-gut", label: "眼睛＋腸胃", needs: ["eyes", "gut"] },
+    { id: "eyes-allergy", label: "眼睛＋敏感", needs: ["eyes", "allergy"] },
+  ];
+
+  function hasNeed(id) {
+    return !!needState[id];
+  }
+
+  function singlePick(id, why) {
+    var item = itemById(id);
+    return {
+      key: id,
+      title: item.name + "｜" + item.spec,
+      why: why,
+      price: item.price,
+      items: [{ id: id, qty: 1 }],
+    };
+  }
+
+  function recommendations() {
+    var cards = [];
+    var eyes = hasNeed("eyes");
+    var gut = hasNeed("gut");
+    var allergy = hasNeed("allergy");
+    if (eyes && gut && allergy) {
+      cards.push({
+        key: "eyes-gut-allergy",
+        title: "明舒清一盒＋常益舒小包＋敏舒通小包",
+        why: "用眼、腸胃、敏感都有點到。明舒清只放一盒，再配兩個小包，就不會變成兩盒明舒清。",
+        price:
+          itemById("mingshuqing-30").price +
+          itemById("changyishu-10").price +
+          itemById("minshutong-10").price,
+        items: [
+          { id: "mingshuqing-30", qty: 1 },
+          { id: "changyishu-10", qty: 1 },
+          { id: "minshutong-10", qty: 1 },
+        ],
+      });
+    } else if (eyes && gut) {
+      var bundleGut = itemById("bundle-ming-chang");
+      cards.push({
+        key: bundleGut.id,
+        title: bundleGut.name,
+        why: "用眼和腸胃都有點到。這組就是明舒清一盒配常益舒小包，組合價一起算。",
+        price: bundleGut.price,
+        items: [{ id: bundleGut.id, qty: 1 }],
+      });
+    } else if (eyes && allergy) {
+      var bundleAllergy = itemById("bundle-ming-min");
+      cards.push({
+        key: bundleAllergy.id,
+        title: bundleAllergy.name,
+        why: "用眼和敏感都有點到。這組就是明舒清一盒配敏舒通小包，組合價一起算。",
+        price: bundleAllergy.price,
+        items: [{ id: bundleAllergy.id, qty: 1 }],
+      });
+    } else {
+      if (eyes) {
+        cards.push(singlePick("mingshuqing-30", "你點了用眼。明舒清是葉黃素、玉米黃素與 LZDCH 的晶亮配方。"));
+      }
+      if (gut) {
+        cards.push(
+          singlePick("changyishu-30", "你點了腸胃。常益舒是布拉迪酵母益生菌，官方用來舒緩腸道敏感、維持消化道機能。")
+        );
+      }
+      if (allergy) {
+        cards.push(
+          singlePick("minshutong-30", "你點了敏感。敏舒通以 LZDCH 為主，官方訴求是環境或溫差變化帶來的不適。")
+        );
+      }
+    }
+    if (hasNeed("guard")) {
+      cards.push(
+        singlePick("yiliaoyang-40", "你點了容易累、想顧防護力。益遼養是靈芝萃取 LZDCH，官方定位病後補養、提升防護力。")
+      );
+    }
+    if (hasNeed("focus")) {
+      cards.push(
+        singlePick("jiesimin-60", "你點了專注。捷思敏含磷脂醯絲胺酸、鎂與 LZDCH，官方用來支持專注與記憶、維持思緒清晰。")
+      );
+    }
+    return { shown: cards.slice(0, 2), extra: cards.length > 2 };
+  }
+
+  function renderPicker() {
+    var chips = document.getElementById("need-chips");
+    var results = document.getElementById("need-results");
+    if (!chips || !results) return;
+    chips.innerHTML = NEED_CHIPS.map(function (chip) {
+      return (
+        '<button type="button" class="chip" data-need="' +
+        chip.id +
+        '" aria-pressed="' +
+        (needState[chip.id] ? "true" : "false") +
+        '">' +
+        escapeHtml(chip.label) +
+        "</button>"
+      );
+    }).join("") + NEED_SHORTCUTS.map(function (chip) {
+      var on = chip.needs.every(function (id) {
+        return needState[id];
+      });
+      return (
+        '<button type="button" class="chip chip-pair" data-shortcut="' +
+        chip.id +
+        '" aria-pressed="' +
+        (on ? "true" : "false") +
+        '">' +
+        escapeHtml(chip.label) +
+        "</button>"
+      );
+    }).join("");
+
+    if (!NEED_CHIPS.some(function (chip) { return needState[chip.id]; })) {
+      results.innerHTML = '<p class="hint">先點上面的情況。可以同時點幾個。</p>';
+      delete results.dataset.picks;
+      return;
+    }
+
+    var rec = recommendations();
+    results.dataset.picks = JSON.stringify(rec.shown);
+    results.innerHTML = rec.shown
+      .map(function (card) {
+        return (
+          '<article class="rec" data-rec="' +
+          escapeHtml(card.key) +
+          '"><h3>' +
+          escapeHtml(card.title) +
+          "</h3><p>" +
+          escapeHtml(card.why) +
+          '</p><p class="sale"><span class="sale-label">建議這組</span> <strong>' +
+          formatNT(card.price) +
+          '</strong></p><button type="button" class="button-primary" data-add-rec="' +
+          escapeHtml(card.key) +
+          '">加入推薦組合</button></article>'
+        );
+      })
+      .join("") + (rec.extra ? '<p class="hint">一次先推兩組。其他方向可以往下的商品自己加。</p>' : "");
+  }
+
+  function addRecommendation(key) {
+    var results = document.getElementById("need-results");
+    var cards = [];
+    try {
+      cards = JSON.parse(results.dataset.picks || "[]");
+    } catch (error) {
+      cards = [];
+    }
+    var card = null;
+    cards.forEach(function (item) {
+      if (item.key === key) card = item;
+    });
+    if (!card) return;
+    var added = false;
+    card.items.forEach(function (item) {
+      var current = state.qty[item.id] || 0;
+      if (current < item.qty) {
+        setQty(item.id, item.qty);
+        added = true;
+      }
+    });
+    var status = document.getElementById("picker-status");
+    if (!status) {
+      status = document.createElement("p");
+      status.id = "picker-status";
+      status.className = "hint";
+      status.setAttribute("role", "status");
+      results.appendChild(status);
+    }
+    status.textContent = added ? "已放入下面的訂購清單，數量還可以再改。" : "這些品項已經在清單裡。";
+  }
+
+  document.getElementById("picker").addEventListener("click", function (event) {
+    var need = event.target.closest("[data-need]");
+    if (need) {
+      var id = need.getAttribute("data-need");
+      needState[id] = !needState[id];
+      renderPicker();
+      return;
+    }
+    var shortcut = event.target.closest("[data-shortcut]");
+    if (shortcut) {
+      var found = null;
+      NEED_SHORTCUTS.forEach(function (chip) {
+        if (chip.id === shortcut.getAttribute("data-shortcut")) found = chip;
+      });
+      if (!found) return;
+      var turnOn = !found.needs.every(function (needId) {
+        return needState[needId];
+      });
+      found.needs.forEach(function (needId) {
+        needState[needId] = turnOn;
+      });
+      renderPicker();
+      return;
+    }
+    var add = event.target.closest("[data-add-rec]");
+    if (add) addRecommendation(add.getAttribute("data-add-rec"));
+  });
+
   document.addEventListener("click", function (event) {
     var button = event.target.closest("[data-step]");
     if (!button) return;
@@ -765,6 +998,7 @@
     if (items.length) document.getElementById("buyer-name").focus();
   });
 
+  renderPicker();
   renderCart();
   loadDraft();
 })();
