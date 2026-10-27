@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f4f1eb" />
+    <title>YB Biotech 網站限定團購</title>
+    <meta
+      name="description"
+      content="YB Biotech 益生菌與保健品網站限定團購登記。開團日期、運費與付款方式待主辦確認。"
+    />
+    <meta property="og:title" content="YB Biotech 網站限定團購" />
+    <meta
+      property="og:description"
+      content="益生菌／保健品團購登記。選擇品項後可複製訂單內容給主辦。"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="zh_TW" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#catalog">跳至商品</a>
+
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <p class="brand">
+          <span class="brand-mark" aria-hidden="true">YB</span>
+          <span>益生菌／保健品</span>
+        </p>
+        <h1>YB Biotech 網站限定團購</h1>
+        <p class="lede">選好數量，金額會跟著變。這是團購登記，不是官方結帳。</p>
+        <p class="header-links">
+          <a
+            href="https://www.yb-biotech.com/v2/official/SalePageCategory/394103"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            官方商品目錄
+            <span class="sr-only">（另開新頁）</span>
+          </a>
+        </p>
+      </div>
+    </header>
+
+    <noscript>
+      <p class="noscript wrap">此頁需要 JavaScript 才能選購與計算金額。</p>
+    </noscript>
+
+    <main class="wrap">
+      <!-- 日期確定後只改下面這句，不要先填還沒公布的日期。 -->
+      <section class="notice" aria-label="團購狀態">
+        <p class="notice-title">開團／結單日期待補</p>
+        <p>運費與付款方式待主辦確認。現在的合計只計算商品。</p>
+      </section>
+
+      <div class="layout">
+        <div class="catalog" id="catalog">
+          <section aria-labelledby="products-heading">
+            <div class="section-head">
+              <h2 id="products-heading">單品</h2>
+              <p>建議售價只供對照，畫線的不是這次售價。</p>
+            </div>
+            <div id="product-list" class="stack">
+              <p class="empty">商品讀取中…</p>
+            </div>
+          </section>
+
+          <section aria-labelledby="bundles-heading">
+            <div class="section-head">
+              <h2 id="bundles-heading">組合優惠</h2>
+              <p>組合已含裡面的單品。加了組合，就不要再把相同單品各買一次。</p>
+            </div>
+            <div id="bundle-list" class="stack"></div>
+          </section>
+        </div>
+
+        <aside class="order-panel" id="order" aria-labelledby="order-heading">
+          <div id="order-editor">
+            <div class="section-head">
+              <h2 id="order-heading">本次訂購</h2>
+              <p id="cart-count">共 0 件</p>
+            </div>
+            <div id="cart-lines" class="cart-lines" aria-live="polite">
+              <p class="empty">還沒有選商品。</p>
+            </div>
+            <p class="cart-total">
+              <span>商品合計</span>
+              <strong id="cart-total">NT$ 0</strong>
+            </p>
+            <p class="fine">運費與付款方式待主辦確認</p>
+
+            <form id="order-form" novalidate>
+              <div id="form-error" class="form-error" role="alert" hidden></div>
+
+              <label class="field" for="buyer-name">
+                姓名
+                <input id="buyer-name" name="name" type="text" autocomplete="name" maxlength="40" required />
+              </label>
+
+              <label class="field" for="buyer-phone">
+                手機
+                <input
+                  id="buyer-phone"
+                  name="phone"
+                  type="tel"
+                  inputmode="tel"
+                  autocomplete="tel"
+                  placeholder="0912345678"
+                  maxlength="20"
+                  required
+                />
+              </label>
+
+              <label class="field" for="buyer-email">
+                Email
+                <input
+                  id="buyer-email"
+                  name="email"
+                  type="email"
+                  inputmode="email"
+                  autocomplete="email"
+                  spellcheck="false"
+                  maxlength="80"
+                  required
+                />
+              </label>
+
+              <fieldset class="field">
+                <legend>取貨方式</legend>
+                <div class="choices">
+                  <label class="choice">
+                    <input type="radio" name="pickup" value="宅配" />
+                    宅配
+                  </label>
+                  <label class="choice">
+                    <input type="radio" name="pickup" value="超商" />
+                    超商
+                  </label>
+                </div>
+              </fieldset>
+
+              <label class="field" for="buyer-address">
+                地址或門市
+                <input
+                  id="buyer-address"
+                  name="address"
+                  type="text"
+                  autocomplete="street-address"
+                  placeholder="選擇取貨方式後填寫"
+                  maxlength="200"
+                  required
+                />
+                <span class="hint" id="address-hint">宅配填地址，超商填門市名稱。</span>
+              </label>
+
+              <label class="field" for="buyer-note">
+                備註
+                <textarea id="buyer-note" name="note" maxlength="500" placeholder="選填"></textarea>
+              </label>
+
+              <div class="actions">
+                <button class="button-primary" id="submit-order" type="submit">送出訂單</button>
+                <button class="button-quiet" id="clear-draft" type="button">清空重填</button>
+              </div>
+            </form>
+          </div>
+
+          <section id="success" class="success" hidden>
+            <p class="success-kicker">訂單摘要</p>
+            <h2 id="success-heading" tabindex="-1">訂單已整理好</h2>
+            <p id="send-status"></p>
+            <p class="meta">
+              <span id="summary-id"></span>
+              <span id="summary-time"></span>
+            </p>
+            <ul id="summary-items" class="summary-items"></ul>
+            <p class="cart-total">
+              <span>商品合計</span>
+              <strong id="summary-total"></strong>
+            </p>
+            <p class="fine">運費與付款方式待主辦確認，未計入合計。</p>
+            <dl id="summary-buyer" class="buyer"></dl>
+            <div class="actions">
+              <button class="button-primary" id="copy-order" type="button">複製訂單內容</button>
+              <a class="button-secondary" id="mailto-link" hidden>用 Email 開啟</a>
+              <button class="button-secondary" id="edit-order" type="button">返回修改</button>
+            </div>
+            <p id="copy-status" class="hint" role="status"></p>
+            <details id="plain-text-details">
+              <summary>純文字內容</summary>
+              <pre id="summary-text" class="receipt"></pre>
+            </details>
+          </section>
+        </aside>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>YB Biotech 網站限定團購草稿。款項與出貨由主辦接洽。</p>
+        <p>
+          <a
+            href="https://www.yb-biotech.com/v2/official/SalePageCategory/394103"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            產品說明見官方商品目錄
+            <span class="sr-only">（另開新頁）</span>
+          </a>
+        </p>
+      </div>
+    </footer>
+
+    <div class="dock">
+      <div>
+        <p class="dock-count" id="dock-count">共 0 件</p>
+        <p class="dock-total" id="dock-total">NT$ 0</p>
+      </div>
+      <button class="dock-button" id="dock-jump" type="button">填寫資料</button>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
