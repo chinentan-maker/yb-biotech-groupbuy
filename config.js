@@ -4,13 +4,20 @@
 //
 // ORGANIZER_EMAIL：主辦信箱。留空則成功頁不顯示 Email 按鈕。
 // FORM_ENDPOINT：留空代表草稿模式，訂單只在頁面上產生，不會自動送出。
+//   把 gas/Code.gs 部署成網頁應用程式後，把網址貼在這裡。
 //   Formspree 例：https://formspree.io/f/xxxxxxxx
-//   Google Apps Script 網頁應用程式網址也可以。
-// 這兩個值會出現在公開網頁裡，請只填本來就打算公開的表單位址，不要填金鑰。
+// 這些值會出現在公開網頁裡。只填公開的表單位址與收款帳戶，不要填金鑰。
+// LINE Pay 的 Channel Secret 不能寫在這個檔案。LINEPAY_ENABLED 維持 false，
+// 直到商家審核通過，並且另有伺服器能簽名，再改成 true。
 
 window.YB_CONFIG = {
   ORGANIZER_EMAIL: "",
   FORM_ENDPOINT: "",
+  LINEPAY_ENABLED: false,
+  BANK_NAME: "",
+  BANK_CODE: "",
+  ACCOUNT_NAME: "",
+  ACCOUNT_NUMBER: "",
 
   products: [
     {

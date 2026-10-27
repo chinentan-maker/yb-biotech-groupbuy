@@ -295,8 +295,11 @@
 
   function readFields() {
     var pickup = "";
-    var selected = form.querySelector('input[name="pickup"]:checked');
-    if (selected) pickup = selected.value;
+    var pickupInput = form.querySelector('input[name="pickup"]:checked');
+    if (pickupInput) pickup = pickupInput.value;
+    var pay = "transfer";
+    var payInput = form.querySelector('input[name="pay"]:checked');
+    if (payInput) pay = payInput.value;
     return {
       name: fieldValue("buyer-name"),
       phone: normalizePhone(fieldValue("buyer-phone")),
@@ -304,7 +307,34 @@
       pickup: pickup,
       address: fieldValue("buyer-address"),
       note: fieldValue("buyer-note"),
+      pay: pay,
+      last5: normalizeDigits(fieldValue("transfer-last5")),
     };
+  }
+
+  function normalizeDigits(value) {
+    return String(value || "")
+      .replace(/[０-９]/g, function (ch) {
+        return String(ch.charCodeAt(0) - 65296);
+      })
+      .replace(/\D/g, "");
+  }
+
+  function linePayEnabled() {
+    return config.LINEPAY_ENABLED === true;
+  }
+
+  function bankDetails() {
+    return {
+      name: String(config.BANK_NAME || "").trim(),
+      code: String(config.BANK_CODE || "").trim(),
+      accountName: String(config.ACCOUNT_NAME || "").trim(),
+      accountNumber: String(config.ACCOUNT_NUMBER || "").trim(),
+    };
+  }
+
+  function bankIsComplete(bank) {
+    return !!(bank.name && bank.code && bank.accountName && bank.accountNumber);
   }
 
   function validate(fields, items) {
@@ -323,13 +353,22 @@
       errors.push({ id: "pickup", message: "請選擇宅配或超商。" });
     }
     if (!fields.address) errors.push({ id: "buyer-address", message: "請填地址或門市。" });
+    if (fields.pay !== "transfer" && fields.pay !== "linepay") {
+      errors.push({ id: "pay-linepay", message: "請選擇付款方式。" });
+    }
+    if (fields.pay === "linepay" && !linePayEnabled()) {
+      errors.push({ id: "pay-linepay", message: "LINE Pay 即將開通，請先用匯款。" });
+    }
+    if (fields.pay === "transfer" && fields.last5 && !/^\d{5}$/.test(fields.last5)) {
+      errors.push({ id: "transfer-last5", message: "匯款後五碼請填 5 個數字，或先留空。" });
+    }
     return errors;
   }
 
   function clearFieldErrors() {
     formError.hidden = true;
     formError.innerHTML = "";
-    ["buyer-name", "buyer-phone", "buyer-email", "buyer-address", "buyer-note"].forEach(function (id) {
+    ["buyer-name", "buyer-phone", "buyer-email", "buyer-address", "buyer-note", "transfer-last5"].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.removeAttribute("aria-invalid");
     });
@@ -381,8 +420,49 @@
 
   function makeOrderId(date) {
     var map = taipeiParts(date);
-    var rand = Math.random().toString(36).slice(2, 6).toUpperCase();
-    return "YG-" + map.year + map.month + map.day + "-" + rand;
+    var alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    var rand = "";
+    for (var i = 0; i < 4; i += 1) {
+      rand += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+    }
+    return "YB-" + map.year + map.month + map.day + "-" + rand;
+  }
+
+  function paymentStatusOf(fields) {
+    if (fields.pay === "linepay") return "LINE Pay待開通";
+    if (/^\d{5}$/.test(fields.last5 || "")) return "已匯款待確認";
+    return "待付款";
+  }
+
+  function paymentLabel(fields) {
+    return fields.pay === "linepay" ? "LINE Pay" : "匯款";
+  }
+
+  function itemsDetail(items) {
+    return items
+      .map(function (item) {
+        return item.name + "｜" + item.spec + " × " + item.qty + " = " + formatNT(item.lineTotal);
+      })
+      .join("；");
+  }
+
+  function paymentLines(order) {
+    var pay = order.payment;
+    var lines = ["付款方式：" + pay.methodLabel, "付款狀態：" + pay.status];
+    if (pay.method === "linepay") {
+      lines.push("LINE Pay 尚未扣款。商家金鑰還沒接上，這筆不是已付款。");
+      return lines;
+    }
+    lines.push("匯款後五碼：" + (pay.last5 || "尚未填寫"));
+    var bank = pay.bank;
+    if (!bankIsComplete(bank)) {
+      lines.push("收款帳戶待主辦填入");
+    }
+    if (bank.name) lines.push("銀行：" + bank.name + (bank.code ? "（" + bank.code + "）" : ""));
+    if (bank.accountName) lines.push("戶名：" + bank.accountName);
+    if (bank.accountNumber) lines.push("帳號：" + bank.accountNumber);
+    lines.push("請匯商品合計。運費待主辦確認，未計入。");
+    return lines;
   }
 
   function formatOrderText(order) {
@@ -410,7 +490,14 @@
     lines.push(
       "",
       "商品合計：" + formatNT(order.total),
-      "運費與付款方式：待主辦確認",
+      "運費：待主辦確認",
+      "",
+      "【付款】"
+    );
+    paymentLines(order).forEach(function (line) {
+      lines.push(line);
+    });
+    lines.push(
       "",
       "【訂購人】",
       "姓名：" + order.buyer.name,
@@ -454,6 +541,13 @@
       items: items,
       total: totalOf(items),
       buyer: readFields(),
+    };
+    order.payment = {
+      method: order.buyer.pay === "linepay" ? "linepay" : "transfer",
+      methodLabel: paymentLabel(order.buyer),
+      last5: order.buyer.pay === "transfer" ? order.buyer.last5 : "",
+      status: paymentStatusOf(order.buyer),
+      bank: bankDetails(),
     };
     order.text = formatOrderText(order);
     return order;
@@ -505,6 +599,7 @@
     addBuyerRow(buyer, "取貨方式", order.buyer.pickup);
     addBuyerRow(buyer, "地址或門市", order.buyer.address);
     addBuyerRow(buyer, "備註", order.buyer.note || "無");
+    fillPaymentSummary(order);
 
     var mail = document.getElementById("mailto-link");
     var email = organizerEmail();
@@ -521,6 +616,72 @@
       mail.hidden = true;
       mail.removeAttribute("href");
     }
+  }
+
+  function addText(parent, className, text) {
+    var p = document.createElement("p");
+    if (className) p.className = className;
+    p.textContent = text;
+    parent.appendChild(p);
+    return p;
+  }
+
+  function fillPaymentSummary(order) {
+    var box = document.getElementById("summary-pay");
+    if (!box) return;
+    box.textContent = "";
+    addText(box, "pay-kicker", "付款");
+    var status = addText(box, "pay-status", order.payment.methodLabel + " · " + order.payment.status);
+    if (order.payment.status === "已匯款待確認") status.classList.add("is-check");
+    else if (order.payment.method === "linepay") status.classList.add("is-later");
+    if (order.payment.method === "linepay") {
+      addText(box, "hint", "LINE Pay 尚未扣款。商家 Channel ID／Secret 還沒接上，這筆不是已付款。");
+      return;
+    }
+    var bank = order.payment.bank;
+    if (!bankIsComplete(bank)) addText(box, "", "收款帳戶待主辦填入");
+    if (bank.name) addText(box, "", "銀行：" + bank.name + (bank.code ? "（" + bank.code + "）" : ""));
+    if (bank.accountName) addText(box, "", "戶名：" + bank.accountName);
+    if (bank.accountNumber) addText(box, "", "帳號：" + bank.accountNumber);
+    addText(box, "", "匯款後五碼：" + (order.payment.last5 || "尚未填寫"));
+    addText(box, "hint", "請匯商品合計。運費待主辦確認，未計入。");
+  }
+
+  function renderBank() {
+    var box = document.getElementById("bank-info");
+    if (!box) return;
+    box.textContent = "";
+    var bank = bankDetails();
+    if (!bankIsComplete(bank)) addText(box, "bank-empty", "收款帳戶待主辦填入");
+    if (bank.name) addText(box, "bank-line", "銀行：" + bank.name + (bank.code ? "（" + bank.code + "）" : ""));
+    if (bank.accountName) addText(box, "bank-line", "戶名：" + bank.accountName);
+    if (bank.accountNumber) addText(box, "bank-line", "帳號：" + bank.accountNumber);
+  }
+
+  function syncPayUI() {
+    var enabled = linePayEnabled();
+    var lineInput = document.getElementById("pay-linepay");
+    var hint = document.getElementById("linepay-hint");
+    var choice = document.getElementById("linepay-choice");
+    if (lineInput) lineInput.disabled = !enabled;
+    if (choice) choice.classList.toggle("is-disabled", !enabled);
+    if (hint) {
+      hint.hidden = false;
+      hint.textContent = enabled
+        ? "選 LINE Pay 也不會扣款，訂單會記成待開通。"
+        : "LINE Pay 即將開通。請先用匯款。";
+    }
+    var selected = form.querySelector('input[name="pay"]:checked');
+    var mode = selected && !selected.disabled ? selected.value : "transfer";
+    if (!selected || selected.disabled) {
+      var transfer = form.querySelector('input[name="pay"][value="transfer"]');
+      if (transfer) transfer.checked = true;
+      mode = "transfer";
+    }
+    var transferPanel = document.getElementById("transfer-panel");
+    var linePanel = document.getElementById("linepay-panel");
+    if (transferPanel) transferPanel.hidden = mode !== "transfer";
+    if (linePanel) linePanel.hidden = mode !== "linepay";
   }
 
   function motion() {
@@ -562,6 +723,11 @@
       total: order.total,
       buyer: order.buyer,
       orderText: order.text,
+      itemsText: itemsDetail(order.items),
+      paymentMethod: order.payment.method,
+      transferLast5: order.payment.last5,
+      paymentStatus: order.payment.status,
+      payment: order.payment,
       organizerEmail: organizerEmail(),
       _subject: "YB Biotech 團購訂單 " + order.id,
     };
@@ -643,6 +809,11 @@
             pickup: pickup,
             address: document.getElementById("buyer-address").value,
             note: document.getElementById("buyer-note").value,
+            pay: (function () {
+              var payInput = form.querySelector('input[name="pay"]:checked');
+              return payInput ? payInput.value : "transfer";
+            })(),
+            last5: document.getElementById("transfer-last5").value,
           },
         })
       );
@@ -673,7 +844,14 @@
         var radio = form.querySelector('input[name="pickup"][value="' + data.fields.pickup + '"]');
         if (radio) radio.checked = true;
       }
+      var last5 = document.getElementById("transfer-last5");
+      if (last5) last5.value = data.fields.last5 || "";
+      if (data.fields.pay === "linepay" && linePayEnabled()) {
+        var linePay = document.getElementById("pay-linepay");
+        if (linePay) linePay.checked = true;
+      }
       updateAddressHint();
+      syncPayUI();
     } catch (error) {
       /* 草稿壞了就從空白開始 */
     }
@@ -703,6 +881,7 @@
     form.reset();
     clearFieldErrors();
     updateAddressHint();
+    syncPayUI();
     showEditor();
     try {
       sessionStorage.removeItem(STORAGE_KEY);
@@ -945,6 +1124,7 @@
   form.addEventListener("input", saveDraft);
   form.addEventListener("change", function () {
     updateAddressHint();
+    syncPayUI();
     saveDraft();
   });
 
@@ -1006,5 +1186,7 @@
 
   renderPicker();
   renderCart();
+  renderBank();
+  syncPayUI();
   loadDraft();
 })();

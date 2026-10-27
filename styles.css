@@ -797,6 +797,59 @@ legend {
   background: radial-gradient(circle, var(--green) 0 5px, #fff 6px);
 }
 
+.choice.is-disabled {
+  background: #f6f4f0;
+  color: var(--faint);
+  cursor: not-allowed;
+}
+
+.choice input[type="radio"]:disabled {
+  opacity: 0.55;
+}
+
+#payment-block {
+  display: grid;
+  gap: 12px;
+}
+
+.pay-panel,
+.pay-summary {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid #e3eee8;
+  border-radius: 16px;
+  background: #f7faf8;
+}
+
+.pay-kicker {
+  color: var(--green);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.bank-empty {
+  font-weight: 700;
+}
+
+.bank-line,
+.pay-summary p {
+  overflow-wrap: anywhere;
+}
+
+.pay-status {
+  font-weight: 700;
+}
+
+.pay-status.is-check {
+  color: var(--green-deep);
+}
+
+.pay-status.is-later {
+  color: var(--amber);
+}
+
 .hint {
   display: block;
   font-weight: 400;

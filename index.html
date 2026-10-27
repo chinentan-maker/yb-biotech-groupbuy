@@ -49,7 +49,7 @@
         <!-- 日期確定後只改下面這句，不要先填還沒公布的日期。 -->
         <p class="hero-status">
           <span>開團／結單日期待補</span>
-          <span>運費與付款方式待主辦確認</span>
+          <span>運費待主辦確認</span>
         </p>
       </div>
     </header>
@@ -103,7 +103,7 @@
               <span>商品合計</span>
               <strong id="cart-total">NT$ 0</strong>
             </p>
-            <p class="fine">運費與付款方式待主辦確認</p>
+            <p class="fine">運費待主辦確認，未計入合計。</p>
 
             <form id="order-form" novalidate>
               <div id="form-error" class="form-error" role="alert" hidden></div>
@@ -174,6 +174,46 @@
                 <textarea id="buyer-note" name="note" maxlength="500" placeholder="選填"></textarea>
               </label>
 
+              <div id="payment-block">
+                <fieldset class="field">
+                  <legend>付款方式</legend>
+                  <div class="choices">
+                    <label class="choice">
+                      <input type="radio" name="pay" value="transfer" checked />
+                      <span>匯款</span>
+                    </label>
+                    <label class="choice" id="linepay-choice">
+                      <input type="radio" name="pay" value="linepay" id="pay-linepay" />
+                      <span>LINE Pay</span>
+                    </label>
+                  </div>
+                  <p class="hint" id="linepay-hint">LINE Pay 即將開通。請先用匯款。</p>
+                </fieldset>
+
+                <div id="transfer-panel" class="pay-panel">
+                  <p class="pay-kicker">匯款資訊</p>
+                  <div id="bank-info"></div>
+                  <label class="field" for="transfer-last5">
+                    匯款後五碼
+                    <input
+                      id="transfer-last5"
+                      name="last5"
+                      type="text"
+                      inputmode="numeric"
+                      autocomplete="off"
+                      maxlength="5"
+                      placeholder="匯完再填，可先留空"
+                    />
+                    <span class="hint">還沒匯可以先送出。填了 5 碼，訂單會標成已匯款待確認。</span>
+                  </label>
+                </div>
+
+                <div id="linepay-panel" class="pay-panel" hidden>
+                  <p class="pay-kicker">LINE Pay</p>
+                  <p>即將開通。商家 Channel ID／Secret 還沒接上，現在不會扣款。</p>
+                </div>
+              </div>
+
               <div class="actions">
                 <button class="button-primary" id="submit-order" type="submit">送出訂單</button>
                 <button class="button-quiet" id="clear-draft" type="button">清空重填</button>
@@ -194,7 +234,8 @@
               <span>商品合計</span>
               <strong id="summary-total"></strong>
             </p>
-            <p class="fine">運費與付款方式待主辦確認，未計入合計。</p>
+            <p class="fine" id="summary-fee">運費待主辦確認，未計入合計。</p>
+            <div id="summary-pay" class="pay-summary"></div>
             <dl id="summary-buyer" class="buyer"></dl>
             <div class="actions">
               <button class="button-primary" id="copy-order" type="button">複製訂單內容</button>

@@ -44,65 +44,68 @@
 
 改完後 commit，推上 `main`。Pages 會用新的 `main` 重新發布。
 
-開團／結單日期在 [`index.html`](index.html) 的「開團／結單日期待補」。日期還沒公布就不要填。運費與付款方式也先留著「待主辦確認」，不要自己寫規則。
+開團／結單日期在 [`index.html`](index.html) 的「開團／結單日期待補」。日期還沒公布就不要填。運費仍寫「待主辦確認」，不要自己寫運費規則。付款可以選匯款；LINE Pay 先顯示即將開通。
 
-## 接上表單後端
+## 接上 Google 試算表
 
-同樣改 [`config.js`](config.js) 最上面兩行：
+訂單後端用 [`gas/Code.gs`](gas/Code.gs)。試算表就是第一版後台，不必另做密碼頁。完整點選步驟也寫在 [`gas/README.md`](gas/README.md)。
+
+1. 新增一個 Google 試算表。**檔案 → 設定**，時區選台北。
+2. **擴充功能 → Apps Script**。
+3. 把 `gas/Code.gs` 全部貼進指令碼編輯器，儲存。
+4. **部署 → 新增部署 → 網頁應用程式**。
+5. 執行身分選 **我**，存取權選 **任何人**。
+6. 部署並授權。複製以 `/exec` 結尾的網址。
+7. 用瀏覽器打開該網址，確認出現 `{"ok":true,"service":"yb-groupbuy-orders"}`。
+8. 把網址貼進 `config.js` 的 `FORM_ENDPOINT`，推上 `main`。
+9. 下了一筆測試單後，回到試算表的「訂單」工作表看有沒有新列。
+
+改了指令碼要重新部署新版本，已經公開的網址才會更新。
+
+網站對 `script.google.com` 用 `text/plain` 與 `no-cors` 送出，避免瀏覽器預檢被擋。因此頁面不能確認試算表真的寫入，主辦要看試算表。買家頁面上仍有訂單編號，可以複製。
+
+### config.js 要填的值
 
 ```js
 ORGANIZER_EMAIL: "",
 FORM_ENDPOINT: "",
+LINEPAY_ENABLED: false,
+BANK_NAME: "",
+BANK_CODE: "",
+ACCOUNT_NAME: "",
+ACCOUNT_NUMBER: "",
 ```
 
-兩個都留空時是草稿模式：按「送出訂單」只會在頁面上產生訂單摘要，不會把資料送到別的地方。買家用「複製訂單內容」傳給主辦。
+- `FORM_ENDPOINT`：上一步的 Apps Script `/exec` 網址。留空就是草稿，訂單只留在頁面上。
+- `ORGANIZER_EMAIL`：有填才出現「用 Email 開啟」。
+- `BANK_NAME`、`BANK_CODE`、`ACCOUNT_NAME`、`ACCOUNT_NUMBER`：匯款帳戶。四個都留空時，頁面顯示「收款帳戶待主辦填入」。不要先填假帳號。
+- `LINEPAY_ENABLED`：維持 `false`。改成 `true` 只會讓買家選到 LINE Pay，仍然不會扣款，訂單狀態是「LINE Pay待開通」。
 
-`ORGANIZER_EMAIL` 有填時，成功頁會多一顆「用 Email 開啟」。它只打開郵件軟體，不會自動寄出。
+這些字會出現在公開網頁。不要把 Channel Secret、API 金鑰或試算表編輯連結放進來。
 
-`FORM_ENDPOINT` 有填、而且是 http(s) 網址時，送出後會另外 POST 一份 JSON。無論送出成功或失敗，頁面都會留下完整摘要，可以複製。
+### 後台怎麼看訂單
 
-這兩個值會出現在公開網頁的原始碼裡。只填本來就公開的表單位址，不要填 API 金鑰。
+打開那份 Google 試算表的「訂單」工作表即可。欄位是：時間、訂單編號、姓名、手機、Email、取貨方式、地址門市、備註、品項明細、合計、付款方式（`transfer` 或 `linepay`）、匯款後五碼、付款狀態、原始 JSON。
 
-請不要把內部銷售報表網址放上這個網站，也不要連到其他團購站。
+付款狀態：
+
+- 匯款、沒填後五碼：**待付款**
+- 匯款、有 5 碼：**已匯款待確認**
+- LINE Pay：**LINE Pay待開通**
+
+對過帳之後，把該列改成 **已付款**。網站不會自動改這格。
+
+### LINE Pay 還沒做
+
+LINE Pay Online API 要用 Channel Secret 做 HMAC，密鑰不能放在 GitHub Pages。商家還要先申請 LINE Pay 合作商店；網路店面需要真正能下單的網站，審核大約 5 到 15 個工作天。誰的商家帳號負責收款，目前還在確認。
+
+現在頁面只把 LINE Pay 顯示成「即將開通」。等有 Channel ID／Secret 之後，把密鑰放在 Apps Script 的指令碼屬性（或另做 Cloudflare Worker），由伺服器簽名。不要把密鑰寫進這個 repo。
 
 ### Formspree
 
-1. 到 [Formspree](https://formspree.io) 建立一個 form。
-2. 複製類似 `https://formspree.io/f/xxxxxxxx` 的網址，貼進 `FORM_ENDPOINT`。
-3. 推上 `main`。
+若暫不用試算表，也可以把 Formspree 網址貼進 `FORM_ENDPOINT`。網站會以 JSON 送出 `orderText`、`buyer`、`paymentMethod`、`transferLast5`、`paymentStatus`。Formspree 不會長出上面那份欄位，對帳還是試算表比較清楚。
 
-網站會以 `application/json` 送出，內容包含 `orderText`（純文字訂單）和 `buyer`。Formspree 的通知信可以用 `_subject` 當主旨。
-
-### Google Apps Script
-
-1. 新增試算表，擴充功能 → Apps Script。
-2. 貼上下面的 `doPost`，部署為「網頁應用程式」。執行身分選自己，存取權選「任何人」。
-3. 把部署後的網址貼進 `FORM_ENDPOINT`，推上 `main`。
-4. 之後若改了指令碼，要重新部署，網址才會更新。
-
-```javascript
-function doPost(e) {
-  var data = JSON.parse(e.postData.contents);
-  var buyer = data.buyer || {};
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("訂單");
-  if (!sheet) sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("訂單");
-  sheet.appendRow([
-    new Date(),
-    data.orderId,
-    data.total,
-    buyer.name,
-    buyer.phone,
-    buyer.email,
-    buyer.pickup,
-    buyer.address,
-    buyer.note,
-    data.orderText,
-  ]);
-  return ContentService.createTextOutput("ok");
-}
-```
-
-網站對 `script.google.com` 會用 `text/plain` 送出 JSON，並採用 `no-cors`，這樣瀏覽器比較不會被預檢擋住。因此頁面無法確認試算表是否真的寫入，主辦要自己看試算表，或請買家同時複製訂單內容。
+請不要把內部銷售報表網址放上這個網站，也不要連到其他團購站。
 
 ## 本機預覽
 
@@ -118,10 +121,12 @@ python3 -m http.server 8080
 
 | 檔案 | 用途 |
 | --- | --- |
-| `index.html` | 頁面、日期占位、需求小測驗、訂購表單 |
+| `index.html` | 頁面、日期占位、需求小測驗、訂購與匯款表單 |
 | `styles.css` | 樣式 |
-| `app.js` | 數量、合計、需求建議、驗證、訂單摘要、複製、表單送出 |
-| `config.js` | 價格、品項、短介紹、`ORGANIZER_EMAIL`、`FORM_ENDPOINT` |
+| `app.js` | 數量、合計、需求建議、驗證、訂單摘要、付款、複製、表單送出 |
+| `config.js` | 價格、品項、表單網址、匯款帳戶、`LINEPAY_ENABLED` |
+| `gas/Code.gs` | 把訂單寫進 Google 試算表的 Apps Script |
+| `gas/README.md` | 部署試算表後端的步驟 |
 | `images/` | 官方商品照片與缺圖占位 |
 | `favicon.svg` | 分頁圖示 |
 | `.nojekyll` | 讓 Pages 不要跑 Jekyll |
