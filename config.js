@@ -3,16 +3,16 @@
 // 改完推上 main，GitHub Pages 會更新。
 //
 // ORGANIZER_EMAIL：主辦信箱。留空則成功頁不顯示 Email 按鈕。
-// FORM_ENDPOINT：留空代表草稿模式，訂單只在頁面上產生，不會自動送出。
-//   把 gas/Code.gs 部署成網頁應用程式後，把網址貼在這裡。
-//   Formspree 例：https://formspree.io/f/xxxxxxxx
+// FORM_ENDPOINT：現在接 Google 表單的 formResponse。留空才是草稿模式。
+// FORM_TYPE："google-form" 時用 entry.* 欄位送出，不是 JSON，也不是 Apps Script。
 // 這些值會出現在公開網頁裡。只填公開的表單位址與收款帳戶，不要填金鑰。
 // LINE Pay 的 Channel Secret 不能寫在這個檔案。LINEPAY_ENABLED 維持 false，
 // 直到商家審核通過，並且另有伺服器能簽名，再改成 true。
 
 window.YB_CONFIG = {
   ORGANIZER_EMAIL: "",
-  FORM_ENDPOINT: "",
+  FORM_ENDPOINT: "https://docs.google.com/forms/d/e/1FAIpQLScmhnOKz_y5oWBbyFpJ450v1ApWNZzHjwoUEB9sDPnJEbzc-A/formResponse",
+  FORM_TYPE: "google-form",
   LINEPAY_ENABLED: false,
   BANK_NAME: "",
   BANK_CODE: "",

@@ -531,6 +531,45 @@
     return /script\.google\.com|script\.googleusercontent\.com/.test(value);
   }
 
+  function isGoogleForm(value) {
+    if (String(config.FORM_TYPE || "").trim() === "google-form") return true;
+    return /docs\.google\.com\/forms\/d\/e\/[^/]+\/formResponse/.test(value);
+  }
+
+  var GOOGLE_FORM_ENTRIES = {
+    orderId: "entry.32350466",
+    name: "entry.262018061",
+    phone: "entry.721558691",
+    email: "entry.2034499457",
+    pickup: "entry.710543867",
+    address: "entry.1337893738",
+    note: "entry.208111820",
+    items: "entry.948746764",
+    total: "entry.1721803060",
+    payMethod: "entry.1755368478",
+    last5: "entry.1832827254",
+    payStatus: "entry.154754757",
+    raw: "entry.970606615",
+  };
+
+  function googleFormBody(order, payload) {
+    var body = new URLSearchParams();
+    body.set(GOOGLE_FORM_ENTRIES.orderId, order.id);
+    body.set(GOOGLE_FORM_ENTRIES.name, order.buyer.name);
+    body.set(GOOGLE_FORM_ENTRIES.phone, order.buyer.phone);
+    body.set(GOOGLE_FORM_ENTRIES.email, order.buyer.email);
+    body.set(GOOGLE_FORM_ENTRIES.pickup, order.buyer.pickup);
+    body.set(GOOGLE_FORM_ENTRIES.address, order.buyer.address);
+    body.set(GOOGLE_FORM_ENTRIES.note, order.buyer.note || "");
+    body.set(GOOGLE_FORM_ENTRIES.items, itemsDetail(order.items));
+    body.set(GOOGLE_FORM_ENTRIES.total, String(order.total));
+    body.set(GOOGLE_FORM_ENTRIES.payMethod, order.payment.method);
+    body.set(GOOGLE_FORM_ENTRIES.last5, order.payment.last5 || "");
+    body.set(GOOGLE_FORM_ENTRIES.payStatus, order.payment.status);
+    body.set(GOOGLE_FORM_ENTRIES.raw, JSON.stringify(payload));
+    return body;
+  }
+
   function buildOrder() {
     var items = getItems();
     var now = new Date();
@@ -737,6 +776,16 @@
         ? AbortSignal.timeout(12000)
         : undefined;
     try {
+      if (isGoogleForm(endpoint)) {
+        await fetch(endpoint, {
+          method: "POST",
+          mode: "no-cors",
+          body: googleFormBody(order, payload),
+          signal: signal,
+        });
+        return "登記已送出。請保留訂單編號，主辦會在表單回覆裡對一下。";
+      }
+
       if (isGoogleScript(endpoint)) {
         await fetch(endpoint, {
           method: "POST",

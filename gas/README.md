@@ -1,3 +1,9 @@
+# Apps Script 備案（現在不要用）
+
+線上訂單已經改走 Google 表單的 `formResponse`，回覆在試算表分頁「表單回覆 1」。手機上的兩步驟驗證沒通過，所以 **不要** 把這支指令碼部署後的網址填進 `config.js` 的 `FORM_ENDPOINT`。
+
+下面步驟留著，等以後真的要改回 Apps Script 再用。
+
 # 把訂單收進 Google 試算表
 
 網站是靜態頁，不能保管金鑰。訂單改由這份 Apps Script 收到後，追加到試算表。試算表就是第一版後台，不另做管理密碼頁。
@@ -17,7 +23,7 @@ LINE Pay 先不要接。`doPost` 若收到 `action: "linepay"` 會回「尚未�
 9. **誰可以存取**選 **任何人**。這是讓公開網頁能把訂單送進來。試算表本身不要設成「知道連結的人可編輯」。
 10. 按 **部署**。第一次會要求授權，用試算表擁有者的 Google 帳號允許。
 11. 複製網址，長得像 `https://script.google.com/macros/s/xxxxxxxx/exec`。
-12. 貼進網站 [`config.js`](../config.js) 的 `FORM_ENDPOINT`，推上 `main`。
+12. 只有在決定改回 Apps Script 時，才把這個網址貼進 `FORM_ENDPOINT`，並拿掉 `FORM_TYPE: "google-form"`。現在的網站不要改這一行。
 13. 用瀏覽器打開那個 `/exec` 網址，應看到 `{"ok":true,"service":"yb-groupbuy-orders"}`。
 14. 再到團購頁下一筆測試單，回到試算表看有沒有新的一列。工作表名稱是「訂單」。
 

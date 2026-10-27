@@ -46,29 +46,43 @@
 
 開團／結單日期在 [`index.html`](index.html) 的「開團／結單日期待補」。日期還沒公布就不要填。運費仍寫「待主辦確認」，不要自己寫運費規則。付款可以選匯款；LINE Pay 先顯示即將開通。
 
-## 接上 Google 試算表
+## 訂單後端：Google 表單
 
-訂單後端用 [`gas/Code.gs`](gas/Code.gs)。試算表就是第一版後台，不必另做密碼頁。完整點選步驟也寫在 [`gas/README.md`](gas/README.md)。
+現在的正式後端是 Google 表單，不是 Apps Script。手機上的兩步驟驗證沒通過，所以不要把 `FORM_ENDPOINT` 改成 `script.google.com`。
 
-1. 新增一個 Google 試算表。**檔案 → 設定**，時區選台北。
-2. **擴充功能 → Apps Script**。
-3. 把 `gas/Code.gs` 全部貼進指令碼編輯器，儲存。
-4. **部署 → 新增部署 → 網頁應用程式**。
-5. 執行身分選 **我**，存取權選 **任何人**。
-6. 部署並授權。複製以 `/exec` 結尾的網址。
-7. 用瀏覽器打開該網址，確認出現 `{"ok":true,"service":"yb-groupbuy-orders"}`。
-8. 把網址貼進 `config.js` 的 `FORM_ENDPOINT`，推上 `main`。
-9. 下了一筆測試單後，回到試算表的「訂單」工作表看有沒有新列。
+`config.js` 已指向表單的 `formResponse`。買家送出後，回覆進試算表分頁 **表單回覆 1**。那份試算表就是後台。瀏覽器用 `no-cors` 送出，頁面讀不到 Google 的回應，但會在畫面上留下訂單編號。請到「表單回覆 1」對編號。
 
-改了指令碼要重新部署新版本，已經公開的網址才會更新。
+送出的是表單欄位，不是 JSON 本文：
 
-網站對 `script.google.com` 用 `text/plain` 與 `no-cors` 送出，避免瀏覽器預檢被擋。因此頁面不能確認試算表真的寫入，主辦要看試算表。買家頁面上仍有訂單編號，可以複製。
+| 欄位 | entry |
+| --- | --- |
+| 訂單編號 | entry.32350466 |
+| 姓名 | entry.262018061 |
+| 手機 | entry.721558691 |
+| Email | entry.2034499457 |
+| 取貨方式 | entry.710543867 |
+| 地址門市 | entry.1337893738 |
+| 備註 | entry.208111820 |
+| 品項明細 | entry.948746764 |
+| 合計 | entry.1721803060 |
+| 付款方式 | entry.1755368478 |
+| 匯款後五碼 | entry.1832827254 |
+| 付款狀態 | entry.154754757 |
+| 原始 JSON | entry.970606615 |
 
-### config.js 要填的值
+付款方式寫 `transfer`（匯款）或 `linepay`。付款狀態：
+
+- 匯款、沒填後五碼：**待付款**
+- 匯款、有 5 碼：**已匯款待確認**
+- LINE Pay：**LINE Pay待開通**
+
+對過帳之後，在試算表把該列改成 **已付款**。網站不會自動改這格。
+
+### config.js
 
 ```js
-ORGANIZER_EMAIL: "",
-FORM_ENDPOINT: "",
+FORM_ENDPOINT: "https://docs.google.com/forms/d/e/…/formResponse",
+FORM_TYPE: "google-form",
 LINEPAY_ENABLED: false,
 BANK_NAME: "",
 BANK_CODE: "",
@@ -76,34 +90,18 @@ ACCOUNT_NAME: "",
 ACCOUNT_NUMBER: "",
 ```
 
-- `FORM_ENDPOINT`：上一步的 Apps Script `/exec` 網址。留空就是草稿，訂單只留在頁面上。
-- `ORGANIZER_EMAIL`：有填才出現「用 Email 開啟」。
-- `BANK_NAME`、`BANK_CODE`、`ACCOUNT_NAME`、`ACCOUNT_NUMBER`：匯款帳戶。四個都留空時，頁面顯示「收款帳戶待主辦填入」。不要先填假帳號。
-- `LINEPAY_ENABLED`：維持 `false`。改成 `true` 只會讓買家選到 LINE Pay，仍然不會扣款，訂單狀態是「LINE Pay待開通」。
+- `FORM_TYPE` 為 `google-form` 時，一定用上面的 entry 欄位。網址裡有 `formResponse` 時也會走這條。
+- 銀行四格維持空白，頁面顯示「收款帳戶待主辦填入」。不要填假帳號。
+- `LINEPAY_ENABLED` 維持 `false`。
+- 不要把 Channel Secret 或試算表編輯連結放進這個檔案。
 
-這些字會出現在公開網頁。不要把 Channel Secret、API 金鑰或試算表編輯連結放進來。
-
-### 後台怎麼看訂單
-
-打開那份 Google 試算表的「訂單」工作表即可。欄位是：時間、訂單編號、姓名、手機、Email、取貨方式、地址門市、備註、品項明細、合計、付款方式（`transfer` 或 `linepay`）、匯款後五碼、付款狀態、原始 JSON。
-
-付款狀態：
-
-- 匯款、沒填後五碼：**待付款**
-- 匯款、有 5 碼：**已匯款待確認**
-- LINE Pay：**LINE Pay待開通**
-
-對過帳之後，把該列改成 **已付款**。網站不會自動改這格。
+`gas/` 留著當以後改接 Apps Script 的備案，現在不要部署、也不要把它的網址寫進 `FORM_ENDPOINT`。
 
 ### LINE Pay 還沒做
 
-LINE Pay Online API 要用 Channel Secret 做 HMAC，密鑰不能放在 GitHub Pages。商家還要先申請 LINE Pay 合作商店；網路店面需要真正能下單的網站，審核大約 5 到 15 個工作天。誰的商家帳號負責收款，目前還在確認。
+LINE Pay Online API 要用 Channel Secret 做 HMAC，密鑰不能放在 GitHub Pages。商家還要先申請 LINE Pay 合作商店；審核大約 5 到 15 個工作天。誰的商家帳號負責收款，目前還在確認。
 
-現在頁面只把 LINE Pay 顯示成「即將開通」。等有 Channel ID／Secret 之後，把密鑰放在 Apps Script 的指令碼屬性（或另做 Cloudflare Worker），由伺服器簽名。不要把密鑰寫進這個 repo。
-
-### Formspree
-
-若暫不用試算表，也可以把 Formspree 網址貼進 `FORM_ENDPOINT`。網站會以 JSON 送出 `orderText`、`buyer`、`paymentMethod`、`transferLast5`、`paymentStatus`。Formspree 不會長出上面那份欄位，對帳還是試算表比較清楚。
+現在頁面只把 LINE Pay 顯示成「即將開通」。等有 Channel ID／Secret 之後，由伺服器簽名。不要把密鑰寫進這個 repo。
 
 請不要把內部銷售報表網址放上這個網站，也不要連到其他團購站。
 
@@ -125,8 +123,8 @@ python3 -m http.server 8080
 | `styles.css` | 樣式 |
 | `app.js` | 數量、合計、需求建議、驗證、訂單摘要、付款、複製、表單送出 |
 | `config.js` | 價格、品項、表單網址、匯款帳戶、`LINEPAY_ENABLED` |
-| `gas/Code.gs` | 把訂單寫進 Google 試算表的 Apps Script |
-| `gas/README.md` | 部署試算表後端的步驟 |
+| `gas/Code.gs` | 備用。現在不要部署；正式訂單走 Google 表單 |
+| `gas/README.md` | Apps Script 備案說明。線上後端不是這份 |
 | `images/` | 官方商品照片與缺圖占位 |
 | `favicon.svg` | 分頁圖示 |
 | `.nojekyll` | 讓 Pages 不要跑 Jekyll |
