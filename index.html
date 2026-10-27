@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#f4f1eb" />
+    <meta name="theme-color" content="#f3f1ec" />
     <title>YB Biotech 網站限定團購</title>
     <meta
       name="description"
@@ -23,15 +23,14 @@
     <a class="skip" href="#catalog">跳至商品</a>
 
     <header class="site-header">
-      <div class="wrap header-inner">
-        <p class="brand">
-          <span class="brand-mark" aria-hidden="true">YB</span>
-          <span>益生菌／保健品</span>
-        </p>
-        <h1>YB Biotech 網站限定團購</h1>
-        <p class="lede">選好數量，金額會跟著變。這是團購登記，不是官方結帳。</p>
-        <p class="header-links">
+      <div class="wrap hero">
+        <div class="brand-row">
+          <p class="brand">
+            <span class="brand-mark" aria-hidden="true">YB</span>
+            <span>益生菌／保健品</span>
+          </p>
           <a
+            class="text-link"
             href="https://www.yb-biotech.com/v2/official/SalePageCategory/394103"
             target="_blank"
             rel="noopener noreferrer"
@@ -39,6 +38,18 @@
             官方商品目錄
             <span class="sr-only">（另開新頁）</span>
           </a>
+        </div>
+        <p class="eyebrow">網站限定</p>
+        <h1>YB Biotech 網站限定團購</h1>
+        <p class="lede">先點你最近在意的事，再把團購價放進清單。</p>
+        <div class="hero-cta">
+          <a class="button-primary" href="#picker">先幫我挑</a>
+          <a class="button-ghost" href="#catalog">直接看商品</a>
+        </div>
+        <!-- 日期確定後只改下面這句，不要先填還沒公布的日期。 -->
+        <p class="hero-status">
+          <span>開團／結單日期待補</span>
+          <span>運費與付款方式待主辦確認</span>
         </p>
       </div>
     </header>
@@ -48,28 +59,22 @@
     </noscript>
 
     <main class="wrap">
-      <!-- 日期確定後只改下面這句，不要先填還沒公布的日期。 -->
-      <section class="notice" aria-label="團購狀態">
-        <p class="notice-title">開團／結單日期待補</p>
-        <p>運費與付款方式待主辦確認。現在的合計只計算商品。</p>
-      </section>
-
       <section class="picker" id="picker" aria-labelledby="picker-heading">
+        <p class="eyebrow">一分鐘配一組</p>
         <div class="section-head">
           <h2 id="picker-heading">你最近比較在意什麼？</h2>
-          <p>可多選。點一下就會出現 1 到 2 個比較貼近的組合，不是問卷。</p>
+          <p>可多選。點一下，下面會配出 1 到 2 組。</p>
         </div>
         <div id="need-chips" class="chips"></div>
         <div id="need-results" aria-live="polite"></div>
       </section>
-      <p class="legal">本頁為團購介紹，非醫療建議；體質特殊或服藥中請先諮詢醫師／營養師。</p>
 
       <div class="layout">
         <div class="catalog" id="catalog">
           <section aria-labelledby="products-heading">
             <div class="section-head">
               <h2 id="products-heading">單品</h2>
-              <p>建議售價只供對照，畫線的不是這次售價。商品照片取自勉益康／YB Biotech 官方商品頁。</p>
+              <p>畫線的是建議售價，這次以團購價為準。</p>
             </div>
             <div id="product-list" class="stack">
               <p class="empty">商品讀取中…</p>
@@ -79,7 +84,7 @@
           <section aria-labelledby="bundles-heading">
             <div class="section-head">
               <h2 id="bundles-heading">組合優惠</h2>
-              <p>組合已含裡面的單品。加了組合，就不要再把相同單品各買一次。</p>
+              <p>組合已含裡面的單品，不必再各買一次。</p>
             </div>
             <div id="bundle-list" class="stack"></div>
           </section>
@@ -208,7 +213,9 @@
 
     <footer class="site-footer">
       <div class="wrap">
-        <p>YB Biotech 網站限定團購草稿。款項與出貨由主辦接洽。</p>
+        <p class="legal">本頁為團購介紹，非醫療建議；體質特殊或服藥中請先諮詢醫師／營養師。</p>
+        <p>商品照片取自勉益康／YB Biotech 官方商品頁。</p>
+        <p>款項與出貨由主辦接洽。這是團購登記，不是官方結帳。</p>
         <p>
           <a
             href="https://www.yb-biotech.com/v2/official/SalePageCategory/394103"
@@ -227,7 +234,7 @@
         <p class="dock-count" id="dock-count">共 0 件</p>
         <p class="dock-total" id="dock-total">NT$ 0</p>
       </div>
-      <button class="dock-button" id="dock-jump" type="button">填寫資料</button>
+      <button class="dock-button" id="dock-jump" type="button">去填資料</button>
     </div>
 
     <script src="config.js"></script>

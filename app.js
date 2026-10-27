@@ -112,7 +112,12 @@
     var copy = "";
     if (item.intro) copy += '<p class="intro">' + escapeHtml(item.intro) + "</p>";
     if (item.points) copy += '<p class="points">' + escapeHtml(item.points) + "</p>";
-    if (item.audience) copy += '<p class="who">適合：' + escapeHtml(item.audience) + "</p>";
+    if (item.audience) {
+      copy +=
+        '<details class="who"><summary>適合誰</summary><p>適合：' +
+        escapeHtml(item.audience) +
+        "</p></details>";
+    }
 
     return (
       '<article class="card" data-id="' +
@@ -126,12 +131,11 @@
       (sources.length > 1 ? " duo" : "") +
       '">' +
       photos +
+      badge +
       '<p class="photo-note">官方商品圖沒載入，先顯示占位。</p></div>' +
       '<div class="card-copy"><div class="title-row"><h3>' +
       escapeHtml(item.name) +
-      "</h3>" +
-      badge +
-      '</div><p class="spec">' +
+      "</h3></div><p class=\"spec\">" +
       escapeHtml(item.spec) +
       "</p>" +
       copy +
@@ -247,7 +251,9 @@
     dockCount.textContent = "共 " + pieces + " 件";
     cartTotal.textContent = formatNT(total);
     dockTotal.textContent = formatNT(total);
-    dockJump.textContent = success.hidden ? "填寫資料" : "查看訂單";
+    if (!success.hidden) dockJump.textContent = "查看訂單";
+    else if (pieces > 0) dockJump.textContent = "去下單";
+    else dockJump.textContent = "去填資料";
 
     if (!items.length) {
       cartLines.innerHTML = '<p class="empty">還沒有選商品。</p>';
@@ -830,7 +836,7 @@
     }).join("");
 
     if (!NEED_CHIPS.some(function (chip) { return needState[chip.id]; })) {
-      results.innerHTML = '<p class="hint">先點上面的情況。可以同時點幾個。</p>';
+      results.innerHTML = '<p class="picker-empty">點一個情況，下面會出現為你配的組合。</p>';
       delete results.dataset.picks;
       return;
     }
@@ -842,11 +848,11 @@
         return (
           '<article class="rec" data-rec="' +
           escapeHtml(card.key) +
-          '"><h3>' +
+          '"><p class="rec-kicker">為你配的一組</p><h3>' +
           escapeHtml(card.title) +
-          "</h3><p>" +
+          '</h3><p class="rec-why">' +
           escapeHtml(card.why) +
-          '</p><p class="sale"><span class="sale-label">建議這組</span> <strong>' +
+          '</p><p class="sale"><span class="sale-label">這組團購價</span> <strong>' +
           formatNT(card.price) +
           '</strong></p><button type="button" class="button-primary" data-add-rec="' +
           escapeHtml(card.key) +
@@ -993,7 +999,7 @@
       return;
     }
     var items = getItems();
-    var target = items.length ? document.getElementById("order") : document.getElementById("catalog");
+    var target = items.length ? document.getElementById("order") : document.getElementById("picker");
     target.scrollIntoView({ block: "start", behavior: motion() });
     if (items.length) document.getElementById("buyer-name").focus();
   });
